@@ -13,7 +13,7 @@ const Message = require('./models/Message');
 dotenv.config();
 
 // Connect to MongoDB
-const mongoURI = 'mongodb+srv://basil59mutuku_db_user:08YUxkMvjTzjko1Y@plp.ycdlukc.mongodb.net/chat?appName=PLP';
+const mongoURI = process.env.MONGO_URI || 'mongodb+srv://basil59mutuku_db_user:08YUxkMvjTzjko1Y@plp.ycdlukc.mongodb.net/chat?appName=PLP';
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -26,7 +26,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'https://week-7-mern-rust.vercel.app',
     methods: ['GET', 'POST'],
     credentials: true,
   },

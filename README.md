@@ -70,9 +70,14 @@ Your work will be automatically submitted when you push to your GitHub Classroom
 5. Include screenshots or GIFs of your working application
 6. Optional: Deploy your application and add the URLs to your README.md
 
+## Deployment URLs
+
+- **Frontend (React App)**: https://week-7-mern-rust.vercel.app/
+- **Backend (Express.js API)**: https://deployment-and-devops-essentials-breezy.onrender.com
+
 ## Resources
 
 - [Socket.io Documentation](https://socket.io/docs/v4/)
 - [React Documentation](https://react.dev/)
 - [Express.js Documentation](https://expressjs.com/)
-- [Building a Chat Application with Socket.io](https://socket.io/get-started/chat) 
+- [Building a Chat Application with Socket.io](https://socket.io/get-started/chat)
