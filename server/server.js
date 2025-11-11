@@ -5,28 +5,24 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
 const mongoose = require('mongoose');
 const Message = require('./models/Message');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
 
 // Connect to MongoDB
-const mongoURI = process.env.MONGO_URI || 'mongodb+srv://basil59mutuku_db_user:08YUxkMvjTzjko1Y@plp.ycdlukc.mongodb.net/chat?appName=PLP';
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGO_URI)
+.then(() => console.log('Connected to MongoDB'))
+.catch((err) => console.error('MongoDB connection error:', err));
 
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'https://week-7-mern-rust.vercel.app',
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://week-7-mern-rust.vercel.app/'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -48,6 +44,7 @@ io.on('connection', (socket) => {
 
   // Handle user joining
   socket.on('user_join', (username) => {
+    console.log(`Received user_join event from ${socket.id} with username: ${username}`);
     users[socket.id] = { username, id: socket.id };
     io.emit('user_list', Object.values(users));
     io.emit('user_joined', { username, id: socket.id });
@@ -56,51 +53,43 @@ io.on('connection', (socket) => {
 
   // Handle chat messages
   socket.on('send_message', async (messageData) => {
-    const message = {
+    const message = new Message({
       ...messageData,
       id: Date.now(),
       sender: users[socket.id]?.username || 'Anonymous',
       senderId: socket.id,
-      timestamp: new Date().toISOString(),
-    };
+      timestamp: new Date(),
+    });
 
     try {
-      // Save message to MongoDB
-      const newMessage = new Message(message);
-      await newMessage.save();
-
-      messages.push(message);
+      await message.save();
+      messages.push(message.toObject());
 
       // Limit stored messages to prevent memory issues
       if (messages.length > 100) {
         messages.shift();
       }
 
-      io.emit('receive_message', message);
+      io.emit('receive_message', message.toObject());
     } catch (error) {
-      console.error('Error saving message to database:', error);
-      socket.emit('error', 'Failed to send message');
+      console.error('Error saving message:', error);
     }
   });
 
  socket.on('send_file', async (fileData) => {
-   const message = {
+   const message = new Message({
      id: Date.now(),
      sender: users[socket.id]?.username || 'Anonymous',
      senderId: socket.id,
-     timestamp: new Date().toISOString(),
+     timestamp: new Date(),
      file: fileData,
-   };
+   });
 
    try {
-     // Save file message to MongoDB
-     const newMessage = new Message(message);
-     await newMessage.save();
-
-     io.emit('receive_message', message);
+     await message.save();
+     io.emit('receive_message', message.toObject());
    } catch (error) {
-     console.error('Error saving file message to database:', error);
-     socket.emit('error', 'Failed to send file');
+     console.error('Error saving file message:', error);
    }
  });
 
@@ -120,7 +109,7 @@ io.on('connection', (socket) => {
   });
 
   // Handle private messages
-  socket.on('private_message', async ({ to, message }) => {
+  socket.on('private_message', ({ to, message }) => {
     const messageData = {
       id: Date.now(),
       sender: users[socket.id]?.username || 'Anonymous',
@@ -128,20 +117,10 @@ io.on('connection', (socket) => {
       message,
       timestamp: new Date().toISOString(),
       isPrivate: true,
-      to,
     };
-
-    try {
-      // Save private message to MongoDB
-      const newMessage = new Message(messageData);
-      await newMessage.save();
-
-      socket.to(to).emit('private_message', messageData);
-      socket.emit('private_message', messageData);
-    } catch (error) {
-      console.error('Error saving private message to database:', error);
-      socket.emit('error', 'Failed to send private message');
-    }
+    
+    socket.to(to).emit('private_message', messageData);
+    socket.emit('private_message', messageData);
   });
 
   // Handle read receipts
@@ -187,19 +166,19 @@ io.on('connection', (socket) => {
 
 // API routes
 app.get('/api/messages', async (req, res) => {
- try {
-   const page = parseInt(req.query.page, 10) || 1;
-   const limit = parseInt(req.query.limit, 10) || 20;
-   const skip = (page - 1) * limit;
+ const page = parseInt(req.query.page, 10) || 1;
+ const limit = parseInt(req.query.limit, 10) || 20;
+ const skip = (page - 1) * limit;
 
+ try {
    const totalMessages = await Message.countDocuments();
-   const messagesFromDB = await Message.find()
+   const messages = await Message.find()
      .sort({ timestamp: -1 })
      .skip(skip)
      .limit(limit);
 
    res.json({
-     messages: messagesFromDB.reverse(),
+     messages: messages.reverse(),
      totalPages: Math.ceil(totalMessages / limit),
      currentPage: page,
    });
@@ -225,9 +204,3 @@ server.listen(PORT, () => {
 });
 
 module.exports = { app, server, io }; 
-
-
-
-
-
-

@@ -33,7 +33,10 @@ function App() {
 
   const handleConnect = () => {
     if (username) {
+      console.log('Connecting with username:', username);
       connect(username);
+    } else {
+      console.log('No username provided');
     }
   };
 
@@ -48,6 +51,9 @@ function App() {
           placeholder="Enter your username"
         />
         <button onClick={handleConnect}>Join</button>
+        <div style={{ marginTop: '10px', color: 'red' }}>
+          Connection Status: {isConnected ? 'Connected' : 'Disconnected'}
+        </div>
       </div>
     );
   }

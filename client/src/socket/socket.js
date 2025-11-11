@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import { useEffect, useState } from 'react';
 
 // Socket.io connection URL
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://deployment-and-devops-essentials-breezy.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 // Create socket instance
 export const socket = io(SOCKET_URL, {
@@ -26,8 +26,10 @@ export const useSocket = () => {
 
   // Connect to socket server
   const connect = (username) => {
+    console.log('Attempting to connect to socket server...');
     socket.connect();
     if (username) {
+      console.log('Emitting user_join with username:', username);
       socket.emit('user_join', username);
     }
   };
@@ -86,10 +88,12 @@ const fetchMessages = async (page = 1) => {
   useEffect(() => {
     // Connection events
     const onConnect = () => {
+      console.log('Socket connected successfully');
       setIsConnected(true);
     };
 
     const onDisconnect = () => {
+      console.log('Socket disconnected');
       setIsConnected(false);
     };
 
@@ -106,10 +110,12 @@ const fetchMessages = async (page = 1) => {
 
     // User events
     const onUserList = (userList) => {
+      console.log('Received user_list:', userList);
       setUsers(userList);
     };
 
     const onUserJoined = (user) => {
+      console.log('User joined:', user);
       // You could add a system message here
       setMessages((prev) => [
         ...prev,
